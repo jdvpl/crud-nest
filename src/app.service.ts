@@ -31,7 +31,7 @@ export class AppService {
       doc.on('pageAdded', () => {
         doc.image(join(process.cwd(), "assets/images/logo.png"), 0, 0, { width: 630, height: 150 })
       })
-      // todo
+
       doc.addPage();
 
       doc.fontSize(10);
