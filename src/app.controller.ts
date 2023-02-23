@@ -1,12 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Get("pdf")
+  async downloadPDF(@Res() res): Promise<void> {
+    const buffer = await this.appService.generatePDF();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(buffer)
   }
 }
