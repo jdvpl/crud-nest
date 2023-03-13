@@ -1,0 +1,209 @@
+
+
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url("${urlRobotoLight}");
+    @import url("${urlRobotoMedium}");
+
+    .white{
+      color: white;
+    }
+    .textCenter{
+      text-align: center;
+    }
+    .py2{
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+    *{
+      margin: 0;
+      padding: 0;
+    }
+    .fRoboto{
+      font-family: 'Roboto', sans-serif;
+    }
+    .w90{
+      width: 85%;
+      margin: auto;
+    }
+    .p0m0{
+      display: flex;
+      flex-direction: column;
+    }
+    .ftBlue{
+      color: #005DA2;
+    }
+    .my1{
+      margin-top: 1rem;
+      max-width: 1rem;
+    }
+    .mt3{
+      margin-top: 2rem;
+    }
+    .ftBold{
+      font-family: 'RobotoBold', sans-serif;
+      font-weight: 700;
+    }
+    .mt1{
+      margin-top: 0.5rem;
+    }
+    .justify{
+      display: flex;
+      justify-content: flex-start;
+    }
+    .mauto{
+      margin: auto;
+    }
+    .w10{
+      width: 5%;
+    }
+    .signImg{
+      margin-top: 2.5rem;
+      margin-right: 1rem;
+      margin-left: 1rem;
+    }
+    .bgFeeImg{
+      padding: 0;
+      margin: 0;
+      background-image: url('${basePathImg}feeBg.svg');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+      width: 255px;
+      height: 255px;
+    }
+    .blueAjunts{
+      padding-top: 33%;
+      font-size: 12px;
+      font-weight: 700;
+      width: 60%;
+      margin: auto;
+      color: #0072C8;
+    }
+    .txtTerm{
+      font-size: 16px;
+      padding-top: 0.4rem;
+    }
+    .fs27{
+      font-size: 24px;
+    }
+    .ftNormal{
+      letter-spacing: normal;
+    }
+
+    .fcApre{
+      color: #00253D;
+    }
+    .colorPre{
+      color: #496374;
+    }
+    .pt2{
+      padding-top: 2rem;
+    }
+    .my5{
+      margin-top: 3rem;
+      margin-bottom: 3rem;
+    }
+    .mb5{
+      margin-bottom: 3rem;
+    }
+    .f20{
+      font-size: 20px;
+    }
+    .ftxtNormal{
+      text-transform: none;
+    }
+    .mx1{
+      margin: 0 3px 0 3px;
+    }
+    .bgWhite{
+      background-color: white;
+    }
+    .dflex{
+      display: flex;
+    }  
+    .w60{
+      width: 40%;
+      margin-left: 3%;
+    }
+    .w30{
+      width: 70%;
+      display: flex;
+      justify-content: end;
+    }
+    .w100{
+      width: 100%;
+    }
+    .pt4{
+      padding-top: 2rem;
+    }
+    @media (max-width:400px) {
+      .dflex{
+        flex-direction: column;
+        justify-content: center;
+        place-items: center;
+      }
+      .w60{
+        width: 100%;
+      }
+      .w30{
+        width: 100%;
+      }
+      .w10{
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="w100 bgWhite">
+  <header>
+    <div>
+      <a href="https://www.bancocajasocial.com">
+        <img src="${basePathImg}headerBannerClick.svg" alt="" width="100%" class="p0m0">
+      </a>
+    </div>
+    <div class="p0m0">
+      <img src="${bannerGender}" alt="" class="p0m0" width="100%">
+    </div>
+  </header>
+  <div class="w90 bgWhite">
+    <p class="my1 fRoboto fcApre">${appreciated}</p>
+    <p class="ftBold mt1 f20">${nameUser}</p>
+  </div>
+  <div class="dflex w100 mt3">
+    <div class="w10">
+      <div class="signImg">
+        <img src="${basePathImg}signing.svg" alt="" height="70%">
+      </div>
+    </div>
+    <div class="w60">
+      <img src="${basePathImg}bodyText.svg" alt="" width="100%">
+    </div>
+    <div class="w30">
+      <div class="mauto my5">
+        <div class="bgFeeImg textCenter">
+          <p class="fRoboto colorPre pt4">Monto preaprobado</p>
+          <p class="ftBlue fs27 mt1 ftBold">${price}</p>
+          <p class="txtTerm colorPre fRoboto">
+            Plazo | <span class="ftBlue ftNormal ftxtNormal">${term}</span>
+          </p>
+          <p class="blueAjunts ftBold">
+            Adjunto encontrará la carta de preaprobación. 
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <img src="${basePathImg}footer.svg" alt="" width="100%">
+  </footer>
+</main>
+</body>
+</html>
