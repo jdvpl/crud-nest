@@ -6,9 +6,16 @@ export class AppController {
   constructor(private readonly appService: AppService) { }
 
   @Post("pdf")
-  async downloadPDF(@Body() body): Promise<{ doc: string }> {
-    console.log({ body })
-    return await this.appService.generatePDF();
+  async downloadPDF(@Res() res):Promise<void> {
+    console.log("aca entro")
+    const buffer= await this.appService.generatePDF();
+    console.log(buffer)
+    res.set({
+      'content-type': 'application/pdf',
+      'content-disposition': 'attachment; filename=lol.pdf',
+      'content-Length': buffer.length
+    })
+    res.end(buffer)
   }
 
   @Post("email")

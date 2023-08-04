@@ -10,10 +10,12 @@ import * as fs from 'fs';
 const city = "Bogota"
 const date = "19 de septiembre de 2023"
 const fullName = "LEIDI PAOLA VALVUENA MARTINEZ";
-const ccDocumentNumberCity = "C.C 80.987.875 de Bogotá";
+const ccDocumentNumberCity = "Cedula de ciudadania 80.987.875 de Bogotá";
 const maxAmount = '$67.986.824 pesos';
 const termFinance = '24 meses';
 const amotizationype = "Cuota fija en pesos";
+// const strategyName='Feria Nacional de Vivienda';
+const strategyName=null;
 
 const basePathURL = "https://aziddevstacmrtggse2000.blob.core.windows.net/aziddevstcoimge2000/approvals";
 
@@ -37,88 +39,177 @@ export class AppService {
   constructor(
     private readonly configService: ConfigService,
   ) { }
-  async generatePDF(): Promise<{ doc: string, name: string }> {
+  async generatePDF(): Promise<Buffer> {
     const pdfBuffer: Buffer = await new Promise(async resolve => {
       const doc = new PDFDocumentWithTables(
         {
           size: 'LETTER',
           bufferPages: true,
           autoFirstPage: false,
+          margin:0
         }
       );
       const fontRobotoLigth = '/fonts/Roboto-Light.ttf';
       const fontRobotoMediumPath = "/fonts/Roboto-Medium.ttf";
 
 
-      const [fontRobotoLight, fontRobotoMedium, logo, calendar, mandalaImage, charts, sign] = await Promise.all([
+      const [fontRobotoLight, fontRobotoMedium,  headerLeft, headerRight,leftSign,  footerSign] = await Promise.all([
         getFont(fontRobotoLigth),
         getFont(fontRobotoMediumPath),
-        fetchImage("/images/logo.png"),
-        fetchImage("/images/Calendar.png"),
-        fetchImage("/images/mandala.png"),
-        fetchImage("/images/Charts.png"),
-        fetchImage("/images/vigilado-sign.png")
+        fetchImage("/images/headerLeft.png"),
+        fetchImage("/images/headerRight.png"),
+        fetchImage("/images/vigilado-sign.png"),
+        fetchImage("/images/lastsign.png")
       ]);
 
+      
+        
+    
       doc.registerFont('Roboto-Light', fontRobotoLight);
       doc.registerFont('Roboto-Medium', fontRobotoMedium);
-      doc.font("Roboto-Light");
+      doc.font('Roboto-Light');
       doc.on('pageAdded', () => {
-        doc.image(logo, 0, 0, { width: 630, height: 150 })
-      })
+        doc.image(headerLeft, 60, 20, { width: 160, height: 65 });
+        doc.image(headerRight, 490, 20, { width: 55, height: 65 });
+      });
       doc.addPage();
       doc.fontSize(10);
-      doc.text(`${city}, ${date}`, 70, 150);
-      doc.moveDown(2).fontSize(12).text("Señores (es)");
-      doc.moveDown(1.1).font("Roboto-Medium").fontSize(13).text(fullName);
-      doc.fontSize(13).moveDown(0.5).font("Roboto-Light").text(ccDocumentNumberCity);
-      doc.moveDown().fontSize(10).font("Roboto-Medium")
-        .text("Ref: ", 70, 280).font("Roboto-Light").text('Respuesta a solicitud financiación de vivienda', 92, 280);
+      doc.text(`${city}, ${date}`, 50, 130);
+      doc.moveDown(2).fontSize(12).text('Señor (a)');
+      doc.moveDown(1.1).font('Roboto-Medium').fontSize(13).text(fullName);
+      doc.fontSize(13).moveDown(0.5).font('Roboto-Light').text(ccDocumentNumberCity);
+      doc
+        .moveDown()
+        .fontSize(10)
+        .font('Roboto-Medium')
+        .text('Ref: ', 50, 265)
+        .font('Roboto-Light')
+        .text('Respuesta a solicitud financiación de vivienda', 72, 265);
 
-      doc.text('', 70)
-      doc.moveDown(1.3).fontSize(10).text('Apreciado señor (a), reciba un cordial saludo. Para el Banco Caja Social es grato comunicarle que su crédito hipotecario ha sido preaprobado con las siguientes características:', { width: doc.page.width - 150, align: 'justify' })
+      if (strategyName) {
+        doc
+          .moveDown()
+          .fontSize(10)
+          .font('Roboto-Medium')
+          .text('Estrategia: ', 50, 285)
+          .font('Roboto-Light')
+          .text(strategyName, 102, 285);
+      }
 
-      doc.roundedRect(80, 350, 210, 55, 5)
-        .fill('#F3F4F6').fillColor('#0000').image(calendar, 90, 368, { width: 16, height: 16 }).text('Monto máximo', 115, 365).fontSize(15).font("Roboto-Medium").
-        text(maxAmount, 115, 379);
+      doc.text('', 50);
+      doc
+        .moveDown(1.3)
+        .fontSize(10)
+        .text(
+          'Apreciado señor (a), reciba un cordial saludo. Para el Banco Caja Social es grato comunicarle que su crédito hipotecario ha sido preaprobado con las siguientes características:',
+          { width: 520, align: 'justify' },
+        );
 
-      doc.roundedRect(300, 350, 210, 55, 5)
-        .fill('#F3F4F6').fillColor('#0000').image(calendar, 312, 368, { width: 16, height: 16 }).font("Roboto-Light").fontSize(9).text('Plazo', 335, 365).fontSize(15).font("Roboto-Medium").
-        text(termFinance, 335, 379);
+      let heightCards = strategyName ? 330 + 20 : 330;
+      doc
+        .text('Monto máximo', 50, heightCards)
+        .font('Roboto-Medium')
+        .text(maxAmount, 180, heightCards);
+      heightCards += 15;
+      doc
+        .font('Roboto-Light')
+        .text('Plazo', 50, heightCards)
+        .font('Roboto-Medium')
+        .text(termFinance, 180, heightCards);
       // mandale image
-      doc.image(mandalaImage, 515, 280, { width: 110, height: 250 })
+      heightCards += 15;
+      doc
+        .font('Roboto-Light')
+        .text('Sistema de amortización', 50, heightCards)
+        .font('Roboto-Medium')
+        .text(amotizationype, 180, heightCards);
+      heightCards += 15;
+      doc
+        .font('Roboto-Light')
+        .text('Tasa de interés', 50, heightCards)
+        .font('Roboto-Medium')
+        .text(strategyName === 'Feria Nacional de Vivienda'?'Aplica la vigente en la feria':'Será la vigente al momento del desembolso', 180, heightCards);
 
-      doc.roundedRect(80, 415, 210, 55, 5)
-        .fill('#F3F4F6').fillColor('#0000').image(charts, 90, 430, { width: 16, height: 16 }).font("Roboto-Light").fontSize(10).text('Sistema de amortización', 115, 425).fontSize(10).font("Roboto-Medium").
-        text(amotizationype, 115, 439);
+      // lefsign image
+      doc.image(leftSign, 13, 290, { width: 15, height: 260 });
+      doc.text('', 50);
+      doc
+        .moveDown(2)
+        .font('Roboto-Light')
+        .text(
+          'A partir de la fecha, podrá buscar y seleccionar la vivienda que cumpla con sus gustos y necesidades, tenga en cuenta que el valor del crédito no podrá exceder los porcentajes definidos en la Ley de Vivienda según el tipo de inmueble.',
+          { width: 520, align: 'justify' },
+        );
 
-      doc.roundedRect(300, 415, 210, 55, 5)
-        .fill('#F3F4F6').fillColor('#0000').image(charts, 322, 430, { width: 16, height: 16 }).font("Roboto-Light").fontSize(10).text('Tasa de interés', 345, 425).fontSize(10).font("Roboto-Medium").
-        text("Será la vigente al momento del desembolso", 345, 439, { width: 140 });
+      doc.moveDown();
 
-      // mandale image
-      doc.image(sign, 20, 340, { width: 15, height: 260 });
+      if (strategyName === 'Feria Nacional de Vivienda') {
+        doc.text(
+          'La aprobación y desembolso del crédito se encuentra sujeta al cumplimiento de las políticas de crédito definidas por el Banco para los créditos hipotecarios; así como en los lineamientos definidos por la ley.',
+          { width: 520, align: 'justify' },
+        );
+        doc.moveDown();
+        doc.text(
+          'Las tasas aplican para desembolsos realizados hasta el 31 de diciembre de 2023. Tenga en cuenta que en caso de que el desembolso de su crédito hipotecario ocurra después del 31 de diciembre de 2023, se aplicará la tasa plena que se encuentre publicada en la cartelera del Banco el día en que se activa el desembolso.',
+          { width: 520, align: 'justify' },
+        );
+      } else {
+        doc.text(
+          'La aprobación y desembolso del crédito se encuentra sujeta al cumplimiento de las políticas de crédito definidas por el Banco para los créditos hipotecarios; así como en los lineamientos definidos por la ley. Las condiciones financieras definitivas del crédito estarán sujetas a las que tenga vigente el Banco al momento del desembolso.',
+          { width: 520, align: 'justify' },
+        );
+      }
 
-      doc.text("", 70)
-      doc.moveDown(3).font("Roboto-Light").text("A partir de la fecha, podrá buscar y seleccionar la vivienda que cumpla con sus gustos y necesidades, tenga en cuenta que el valor del crédito no podrá exceder los porcentajes definidos en la Ley de Vivienda según el tipo de inmueble.", { width: doc.page.width - 150, align: 'justify' });
+      doc.moveDown();
+      doc.text(
+        'En los próximos días un asesor se comunicará con usted para informarle los documentos que se requieren para ratificar la aprobación. La presente comunicación no constituye oferta comercial de acuerdo con lo establecido en la normatividad comercial vigente.',
+        { width: 520, align: 'justify' },
+      );
 
-      doc.moveDown().text("De ser aprobado el crédito, las condiciones financieras definitivas estarán sujetas a las que tenga vigente el Banco al momento del desembolso.", { width: doc.page.width - 150, align: 'justify' })
+      doc.moveDown().font('Roboto-Medium').text('Cordialmente,');
+      doc
+        .moveDown(strategyName?4.5:6.5)
+        .font('Roboto-Medium')
+        .text('Esperanza Pérez Mora')
+        .font('Roboto-Light')
+        .text('Vicepresidenta de Banca Masiva')
+        .font('Roboto-Medium')
+        .text('Banco Caja Social');
+      doc.image(footerSign, 50, strategyName?620:585, { width: 100, height: 40 });
 
-      doc.moveDown().text("La presente preaprobación está sujeta a los términos y condiciones establecidos en las políticas del Banco Caja Social, así como en los lineamientos definidos por la ley.", { width: doc.page.width - 150, align: 'justify' })
+      doc.moveDown(strategyName ? 2 : 5);
+      doc.fillColor('#9CA3AF').fontSize(8.5).font('Roboto-Light');
+      doc.text(
+        'El Banco Caja Social informa que la Defensoría del Consumidor Financiero la ejercen los doctores',
+        { align: 'center', width: 520 },
+      );
+      doc.text(
+        'José Guillermo Peña González (defensor principal) y Carlos Alfonso Cifuentes Neira (defensor suplente).',
+        { align: 'center', width: 520 },
+      );
+      doc.text(
+        'Dirección: avda. 19 # 114-09, oficina 502. Horario de atención: lunes a viernes, de 8:00 a.m. a 5:00 p.m.',
+        { align: 'center', width: 520 },
+      );
+      doc.text(
+        'Teléfonos (601) 213 1322 / 213 1370, en Bogotá, y a los números celulares 321 924 0479 / 323 232 2934 / 323 232 2911. ',
+        { align: 'center', width: 520 },
+      );
+      doc.text('Correo electrónico: defensorbancocajasocial@pgabogados.com.', {
+        align: 'center',
+        width: 520,
+      });
 
-      doc.moveDown().text("En los próximos días un asesor se comunicará con usted para informarle los documentos que se requieren para ratificar la aprobación.", { width: doc.page.width - 150, align: 'justify' })
-
-      doc.moveDown(4).text("Cordialmente,")
-      doc.moveDown(0.5).fillColor("#005DA2").font("Roboto-Medium").text("Banco Caja Social")
       const buffer = [];
       doc.on('data', buffer.push.bind(buffer));
       doc.on('end', () => {
         const data = Buffer.concat(buffer);
-        resolve(data)
-      })
-      doc.end()
+        resolve(data);
+      });
+
+      doc.end();
     })
-    return { doc: pdfBuffer.toString("base64"), name: `carta_aprobacion_${city}` };
+    return pdfBuffer;
   }
 
   async sendEmail(): Promise<{ email: string }> {
