@@ -7,23 +7,26 @@ import { ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import * as fs from 'fs';
 
-const city = "Bogota"
-const date = "19 de septiembre de 2023"
-const fullName = "LEIDI PAOLA VALVUENA MARTINEZ";
-const ccDocumentNumberCity = "Cedula de ciudadania 80.987.875 de Bogotá";
-const maxAmount = '$67.986.824 pesos';
+const city = 'Bogotá';
+const isMortgage = true;
+const date = '19 de septiembre de 2023';
+// const fullName = ['LEIDI PAOLA VALVUENA MARTINEZ', 'Pepito Perez'];
+const fullName = ['LEIDI PAOLA VALVUENA MARTINEZ'];
+// const ccDocumentNumber = ['CC 80987875', 'CC 123456789'];
+const ccDocumentNumber = ['CC 80987875'];
+const maxAmount = '$67.986.824';
 const termFinance = '24 meses';
-const amotizationype = "Cuota fija en pesos";
-// const strategyName='Feria Nacional de Vivienda';
-const strategyName=null;
+const amotizationype = 'Cuota fija Pesos';
+// const strategyName = 'Gran Salón Inmobiliario';
+const strategyName = null;
 
-const basePathURL = "https://aziddevstacmrtggse2000.blob.core.windows.net/aziddevstcoimge2000/approvals";
+const basePathURL =
+  'https://aziddevstacmrtggse2000.blob.core.windows.net/aziddevstcoimge2000/approvals';
 
 async function fetchImage(imagePath: string, basePath: string = basePathURL) {
-  const image = await axios
-    .get(basePath + imagePath, {
-      responseType: 'arraybuffer'
-    })
+  const image = await axios.get(basePath + imagePath, {
+    responseType: 'arraybuffer',
+  });
   return image.data;
 }
 
@@ -36,35 +39,34 @@ async function getFont(url: string) {
 }
 @Injectable()
 export class AppService {
-  constructor(
-    private readonly configService: ConfigService,
-  ) { }
+  constructor(private readonly configService: ConfigService) {}
   async generatePDF(): Promise<Buffer> {
-    const pdfBuffer: Buffer = await new Promise(async resolve => {
-      const doc = new PDFDocumentWithTables(
-        {
-          size: 'LETTER',
-          bufferPages: true,
-          autoFirstPage: false,
-          margin:0
-        }
-      );
+    const pdfBuffer: Buffer = await new Promise(async (resolve) => {
+      const doc = new PDFDocumentWithTables({
+        size: 'LETTER',
+        bufferPages: true,
+        autoFirstPage: false,
+        margin: 0,
+      });
       const fontRobotoLigth = '/fonts/Roboto-Light.ttf';
-      const fontRobotoMediumPath = "/fonts/Roboto-Medium.ttf";
+      const fontRobotoMediumPath = '/fonts/Roboto-Medium.ttf';
 
-
-      const [fontRobotoLight, fontRobotoMedium,  headerLeft, headerRight,leftSign,  footerSign] = await Promise.all([
+      const [
+        fontRobotoLight,
+        fontRobotoMedium,
+        headerLeft,
+        headerRight,
+        leftSign,
+        footerSign,
+      ] = await Promise.all([
         getFont(fontRobotoLigth),
         getFont(fontRobotoMediumPath),
-        fetchImage("/images/headerLeft.png"),
-        fetchImage("/images/headerRight.png"),
-        fetchImage("/images/vigilado-sign.png"),
-        fetchImage("/images/lastsign.png")
+        fetchImage('/images/headerLeft.png'),
+        fetchImage('/images/headerRight.png'),
+        fetchImage('/images/vigilado-sign.png'),
+        fetchImage('/images/V2/firma.png'),
       ]);
 
-      
-        
-    
       doc.registerFont('Roboto-Light', fontRobotoLight);
       doc.registerFont('Roboto-Medium', fontRobotoMedium);
       doc.font('Roboto-Light');
@@ -74,61 +76,81 @@ export class AppService {
       });
       doc.addPage();
       doc.fontSize(10);
-      doc.text(`${city}, ${date}`, 50, 130);
-      doc.moveDown(2).fontSize(12).text('Señor (a)');
-      doc.moveDown(1.1).font('Roboto-Medium').fontSize(13).text(fullName);
-      doc.fontSize(13).moveDown(0.5).font('Roboto-Light').text(ccDocumentNumberCity);
+      doc.fontSize(10).text(`${city}, ${date}`, 50, 130);
+      doc.moveDown(2).fontSize(10).text('Reciba un cordial saludo');
+      fullName.forEach((name, index) => {
+        const cc = ccDocumentNumber[index] || '';
+        const leftMargin = 50;
+        const ccWidth = doc.widthOfString(cc) - 180;
+        doc
+          .moveDown()
+          .font('Roboto-Medium')
+          .fontSize(10)
+          .text(name.toUpperCase(), leftMargin, doc.y, {
+            align: 'left',
+            continued: true,
+          });
+
+        doc.fontSize(10).text(cc, ccWidth, doc.y, {
+          align: 'right',
+        });
+      });
+
       doc
         .moveDown()
         .fontSize(10)
         .font('Roboto-Medium')
-        .text('Ref: ', 50, 265)
+        .text('Asunto: ', 50, 245)
         .font('Roboto-Light')
-        .text('Respuesta a solicitud financiación de vivienda', 72, 265);
+        .text('Preaprobado crédito de vivienda', 86, 245);
 
       if (strategyName) {
         doc
           .moveDown()
           .fontSize(10)
           .font('Roboto-Medium')
-          .text('Estrategia: ', 50, 285)
+          .text('Estrategia: ', 50, 250)
           .font('Roboto-Light')
-          .text(strategyName, 102, 285);
+          .text(strategyName, 102, 250);
       }
 
       doc.text('', 50);
       doc
-        .moveDown(1.3)
+        .moveDown()
         .fontSize(10)
         .text(
-          'Apreciado señor (a), reciba un cordial saludo. Para el Banco Caja Social es grato comunicarle que su crédito hipotecario ha sido preaprobado con las siguientes características:',
+          'Para el Banco Caja Social es grato comunicarle(s) que, de acuerdo con la información suministrada por usted(es) y la autorización para estudiar la viabilidad de la solicitud de crédito de vivienda, hemos generado un preaprobado bajo las siguientes características:',
           { width: 520, align: 'justify' },
         );
 
-      let heightCards = strategyName ? 330 + 20 : 330;
+      let heightCards = strategyName ? 330 : 315;
       doc
         .text('Monto máximo', 50, heightCards)
         .font('Roboto-Medium')
-        .text(maxAmount, 180, heightCards);
-      heightCards += 15;
-      doc
-        .font('Roboto-Light')
-        .text('Plazo', 50, heightCards)
-        .font('Roboto-Medium')
-        .text(termFinance, 180, heightCards);
-      // mandale image
+        .text(maxAmount, 200, heightCards);
       heightCards += 15;
       doc
         .font('Roboto-Light')
         .text('Sistema de amortización', 50, heightCards)
         .font('Roboto-Medium')
-        .text(amotizationype, 180, heightCards);
+        .text(amotizationype, 200, heightCards);
       heightCards += 15;
       doc
         .font('Roboto-Light')
-        .text('Tasa de interés', 50, heightCards)
+        .text('Plazo', 50, heightCards)
         .font('Roboto-Medium')
-        .text(strategyName === 'Feria Nacional de Vivienda'?'Aplica la vigente en la feria':'Será la vigente al momento del desembolso', 180, heightCards);
+        .text(termFinance, 200, heightCards);
+      // mandale image
+      heightCards += 15;
+      doc
+        .font('Roboto-Light')
+        .text('Línea de crédito', 50, heightCards)
+        .font('Roboto-Medium')
+        .text(
+          isMortgage ? 'Crédito Hipotecario' : 'Cesión de Cartera Hipotecaria',
+          200,
+          heightCards,
+        );
 
       // lefsign image
       doc.image(leftSign, 13, 290, { width: 15, height: 260 });
@@ -137,47 +159,43 @@ export class AppService {
         .moveDown(2)
         .font('Roboto-Light')
         .text(
-          'A partir de la fecha, podrá buscar y seleccionar la vivienda que cumpla con sus gustos y necesidades, tenga en cuenta que el valor del crédito no podrá exceder los porcentajes definidos en la Ley de Vivienda según el tipo de inmueble.',
+          'Para continuar con el trámite de la solicitud, es requisito entregar los documentos soporte de acuerdo con su actividad económica, antes de 60 días calendario a partir de la fecha de esta comunicación. Dicha documentación deberá ser entregada al asesor del Banco que lo(s) está acompañando.',
           { width: 520, align: 'justify' },
         );
 
       doc.moveDown();
 
-      if (strategyName === 'Feria Nacional de Vivienda') {
-        doc.text(
-          'La aprobación y desembolso del crédito se encuentra sujeta al cumplimiento de las políticas de crédito definidas por el Banco para los créditos hipotecarios; así como en los lineamientos definidos por la ley.',
-          { width: 520, align: 'justify' },
-        );
-        doc.moveDown();
-        doc.text(
-          'Las tasas aplican para desembolsos realizados hasta el 31 de diciembre de 2023. Tenga en cuenta que en caso de que el desembolso de su crédito hipotecario ocurra después del 31 de diciembre de 2023, se aplicará la tasa plena que se encuentre publicada en la cartelera del Banco el día en que se activa el desembolso.',
-          { width: 520, align: 'justify' },
-        );
-      } else {
-        doc.text(
-          'La aprobación y desembolso del crédito se encuentra sujeta al cumplimiento de las políticas de crédito definidas por el Banco para los créditos hipotecarios; así como en los lineamientos definidos por la ley. Las condiciones financieras definitivas del crédito estarán sujetas a las que tenga vigente el Banco al momento del desembolso.',
-          { width: 520, align: 'justify' },
-        );
-      }
-
-      doc.moveDown();
       doc.text(
-        'En los próximos días un asesor se comunicará con usted para informarle los documentos que se requieren para ratificar la aprobación. La presente comunicación no constituye oferta comercial de acuerdo con lo establecido en la normatividad comercial vigente.',
+        'Es importante tener presente que, las condiciones del preaprobado están sujetas al cumplimiento de las políticas y los procesos definidos por la Entidad, dentro de los cuales usted(es) debe(n) conservar el nivel de ingresos informado, mantener su capacidad de endeudamiento y realizar el pago oportuno de sus obligaciones financieras.',
         { width: 520, align: 'justify' },
       );
 
-      doc.moveDown().font('Roboto-Medium').text('Cordialmente,');
+      doc.moveDown();
+      doc.text(
+        'La presente comunicación no constituye oferta comercial de acuerdo con lo establecido en la normatividad comercial vigente.',
+        { width: 520, align: 'justify' },
+      );
+      doc.moveDown();
+      doc.text(
+        'Agradecemos su confianza y le(s) reiteramos nuestro interés en acompañarle(s) con nuestros productos y servicios para seguir alcanzando las metas propuestas.',
+        { width: 520, align: 'justify' },
+      );
+
+      doc.moveDown().font('Roboto-Light').text('Cordialmente,');
       doc
-        .moveDown(strategyName?4.5:6.5)
+        .moveDown(strategyName ? 6.5 : 6.5)
         .font('Roboto-Medium')
-        .text('Esperanza Pérez Mora')
+        .text('Juan Francisco Sánchez Pérez')
         .font('Roboto-Light')
-        .text('Vicepresidenta de Banca Masiva')
+        .text('Vicepresidente Comercial')
         .font('Roboto-Medium')
         .text('Banco Caja Social');
-      doc.image(footerSign, 50, strategyName?620:585, { width: 100, height: 40 });
+      doc.image(footerSign, 50, strategyName ? 620 : 595, {
+        width: 100,
+        height: 40,
+      });
 
-      doc.moveDown(strategyName ? 2 : 5);
+      doc.moveDown(strategyName ? 2 : 3.5);
       doc.fillColor('#9CA3AF').fontSize(8.5).font('Roboto-Light');
       doc.text(
         'El Banco Caja Social informa que la Defensoría del Consumidor Financiero la ejercen los doctores',
@@ -208,45 +226,55 @@ export class AppService {
       });
 
       doc.end();
-    })
+    });
     return pdfBuffer;
   }
 
   async sendEmail(): Promise<{ email: string }> {
-    const mailer = nodemailer.createTransport(
-      smtpTransport({
-        host: 'sandbox.smtp.mailtrap.io',
-        port: 2525,
-        auth: {
-          user: "4e5c3e15a92ad4",
-          pass: "47883064178c74"
-        }
-      })
-    );
+    const mailer = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'juanda554242@gmail.com',
+        pass: 'mquriominjfoficv',
+      },
+      disableFileAccess: true,
+    });
 
-    type gender = "F" | "M";
-
-    const basePathImg = this.configService.get("BASEPATH_EMAIL_IMGS");
-    const urlRobotoLight = 'https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap';
-    const urlRobotoMedium = 'https://fonts.googleapis.com/css2?family=RobotoBold:wght@500&display=swap';
-    const gender: gender = "F";
-    const bannerGender = gender === "F" ? `${basePathImg}femaleBanner.svg` : `${basePathImg}maleBanner.svg`;
-    const appreciated = gender === "F" ? 'Apreciada' : 'Apreciado';
-    const nameUser = "Luz Agudelo ";
+    const URLIMAGE = this.configService.get('BASEPATH_EMAIL_IMGS');
+    const urlRobotoLight =
+      'https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap';
+    const urlRobotoMedium =
+      'https://fonts.googleapis.com/css2?family=RobotoBold:wght@500&display=swap';
+    const nameUser = 'Luz Agudelo ';
     const price = '$ 42.319.075';
-    const term = "5 años";
-
-    const pdfPath = join(process.cwd(), "assets/img/bcs_carta_preaprobado_CC17168784.pdf")
-    const pdf = fs.readFileSync(pdfPath).toString("base64");
+    const term = '5';
+    const pdfPath = join(
+      process.cwd(),
+      'assets/img/bcs_carta_preaprobado_CC17168784.pdf',
+    );
+    const pdf = fs.readFileSync(pdfPath).toString('base64');
+    const url = encodeURIComponent(
+      '50d6e86c41c5068e:1087b69bae3c553352ec2686640d513f0e4aa2dba87626fd4fcc823f40d719760e3600522a0bf92f67bf799014baa038328c01fc5c1ac6276c05dc085649c90f362a7d3c86a8044e75c33fcf126fe82b3ed625423defcbd3c331b3082f737eaf0c09a9273578f6cada8360d0e977b4085b14d0a25d2be6de:427d83478b4340f53f81f71f76c9087580dac7a8462cb65dff18940cb409b078a054de7ba637b675fbe9719520b407f977255a154dd81182574464b821:0b56145ccf753a20f985020f0ace75e4',
+    );
+    const correctUrl = 'http://localhost:3000/vivienda/email/' + url;
+    const html = `<!DOCTYPE html><html lang=es><meta charset=UTF-8><meta content="IE=edge"http-equiv=X-UA-Compatible><meta content="width=device-width,initial-scale=1"name=viewport><head><style> @import url("${urlRobotoLight}");@import url("${urlRobotoMedium}");.textBgGray{font-family: 'Roboto', sans-serif;font-size: 12px;}.t-white{color:#fff !important; }.bggray{background:#496374 !important;}.textCenter{text-align:center}.py2{padding:1rem 0}.p0m0{display:flex;flex-direction:column}.ftBlue{color:#0072c8 !important;}.ftBold{font-family:RobotoBold,sans-serif;font-weight:700;}.mt1{margin-top:.5rem;}.mauto{margin:auto;}.bgFeeImg{padding-bottom:1rem;padding-top:1.075rem;background:url('${URLIMAGE}feeBg.png') !important;margin:auto;width:50%;border-radius:9px;background-size:cover !important;}.underline{text-decoration:underline !important;}.txtTerm{font-size:16px;padding-top:.4rem}.fs27{font-size:25px;margin-bottom:5px;}.ftNormal{letter-spacing:normal;}.colorPre{font-size:13px;color:#496374;text-transform:uppercase;letter-spacing:2px;font-family:Roboto,sans-serif}.pb2{padding-bottom:1rem}.mt5{margin-top:2rem}.f20{font-size:20px}.ftxtNormal{text-transform:none}.bgWhite{background:url('${URLIMAGE}bgImage.png') !important;background-size: cover !important;}.w100{width:100%}.containerEmail{width:75%;margin:auto}.bodyEmail{background:url('${URLIMAGE}bgImage.png') !important;background-size: cover !important;}@media (max-width:550px){.containerEmail{width:100%}.bgFeeImg{width:90%;background-size:cover;background-repeat:no-repeat;}} </style></head><body><div class="bodyEmail"><div class="bggray textBgGray containerEmail py2 textCenter"><span class="t-white  bggray">Si no puede visualizar correctamente este E-mail, <a class="t-white bggray underline" href=${correctUrl}>haga clic aquí </a>y agréguenos a la lista de contactos.</span></div><div class="containerEmail w100 bgWhite"><header><div class=p0m0><img alt=""src=${URLIMAGE}banner.png class="p0m0 w100"></div></header><div class=mt5><p class="bgWhite ftBold mt1 textCenter f20 ftBlue ">Hola, ${nameUser}</div><div class="w100"><img alt=""src=${URLIMAGE}bodyText.png width=100%></div><div class=w100><div class="mauto "><div class="bgFeeImg textCenter"><p class="fRoboto colorPre">Valor preaprobado<p class="ftBlue fs27 mt1 ftBold">${price}<p class="txtTerm colorPre fRoboto">Plazo | <span class="ftBlue ftNormal ftxtNormal">${term} meses</span></div></div></div><footer><img alt=""src=${URLIMAGE}footer.png width=100%></footer></div></div> </body></html>`;
+    console.log('🚀 ~ AppService ~ sendEmail ~ html:', html);
     const mailOptions = {
       from: 'juanda554242@gmail.com',
-      to: 'juanda554242@gmail.com',
-      subject: 'Carta de preaprobacion',
-      html: `<html lang="es"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>@import url("${urlRobotoLight}"); @import url("${urlRobotoMedium}"); .white{ color: white;} .textCenter{ text-align: center;} .py2{ padding-top: 1rem; padding-bottom: 1rem;} *{ margin: 0; padding: 0;} .fRoboto{ font-family: 'Roboto', sans-serif;} .w90{ width: 85%; margin: auto;} .p0m0{ display: flex; flex-direction: column;} .ftBlue{ color: #005DA2;} .my1{ margin-top: 1rem; max-width: 1rem;} .mt3{ margin-top: 2rem;} .ftBold{ font-family: 'RobotoBold', sans-serif; font-weight: 700;} .mt1{ margin-top: 0.5rem;} .justify{ display: flex; justify-content: flex-start;} .mauto{ margin: auto;} .w10{ width: 5%;} .signImg{ margin-top: 2.5rem; margin-right: 1rem; margin-left: 1rem;} .bgFeeImg{ padding: 0; margin: 0; background-image: url('${basePathImg}feeBg.svg'); background-repeat: no-repeat; background-position: center; background-size: cover; width: 255px; height: 255px;} .blueAjunts{ padding-top: 33%; font-size: 12px; font-weight: 700; width: 60%; margin: auto; color: #0072C8;} .txtTerm{ font-size: 16px; padding-top: 0.4rem;} .fs27{ font-size: 24px;} .ftNormal{ letter-spacing: normal;} .fcApre{ color: #00253D;} .colorPre{ color: #496374;} .pt2{ padding-top: 2rem;} .my5{ margin-top: 3rem; margin-bottom: 3rem;} .mb5{ margin-bottom: 3rem;} .f20{ font-size: 20px;} .ftxtNormal{ text-transform: none;} .mx1{ margin: 0 3px 0 3px;} .bgWhite{ background-color: white;} .dflex{ display: flex;} .w60{ width: 40%; margin-left: 3%;} .w30{ width: 70%; display: flex; justify-content: end;} .w100{ width: 100%;} .pt4{ padding-top: 2rem;} @media (max-width:400px){ .dflex{ flex-direction: column; justify-content: center; place-items: center;} .w60{ width: 100%;} .w30{ width: 100%;} .w10{ display: none;}} </style></head><body><main class="w100 bgWhite"><header><div><a href="https://www.bancocajasocial.com"><img src="${basePathImg}headerBannerClick.svg" alt="" width="100%" class="p0m0"></a></div><div class="p0m0"><img src="${bannerGender}" alt="" class="p0m0" width="100%"></div></header><div class="w90 bgWhite"><p class="my1 fRoboto fcApre">${appreciated}</p><p class="ftBold mt1 f20">${nameUser}</p></div><div class="dflex w100 mt3"><div class="w10"><div class="signImg"><img src="${basePathImg}signing.svg" alt="" height="70%"></div></div><div class="w60"><img src="${basePathImg}bodyText.svg" alt="" width="100%"></div><div class="w30"><div class="mauto my5"><div class="bgFeeImg textCenter"><p class="fRoboto colorPre pt4">Monto preaprobado</p><p class="ftBlue fs27 mt1 ftBold">${price}</p><p class="txtTerm colorPre fRoboto">Plazo | <span class="ftBlue ftNormal ftxtNormal">${term}</span></p><p class="blueAjunts ftBold">Adjunto encontrará la carta de preaprobación. </p></div></div></div></div><footer><img src="${basePathImg}footer.svg" alt="" width="100%"></footer></main></body></html>`,
-      attachments: [{
-        filename: 'carta_preaprobacion.pdf',
-        content: pdf
-      }]
+      // to: 'juanda554242@gmail.com',
+      // to: 'yara.orozco10@gmail.com',
+      to: 'jdsuarez@fgs.co',
+
+      subject: 'Carta de preaprobacion Prueba x',
+      html: html,
+      attachments: [
+        {
+          filename: 'carta_preaprobacion.pdf',
+          content: pdf,
+        },
+      ],
     };
 
     mailer.sendMail(mailOptions, (error, info) => {
@@ -257,6 +285,6 @@ export class AppService {
       }
     });
 
-    return { email: "juanda54242@gmail.com" }
+    return { email: 'juanda54242@gmail.com' };
   }
 }

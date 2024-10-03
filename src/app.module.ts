@@ -7,7 +7,8 @@ import { Todo } from './todos/entities/todo.entity';
 import { TodosModule } from './todos/todos.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(),
+  imports: [
+    ConfigModule.forRoot(),
     //   TypeOrmModule.forRoot({
     //   type: 'postgres',
     //   host: 'containers-us-west-67.railway.app',
@@ -23,4 +24,4 @@ import { TodosModule } from './todos/todos.module';
   controllers: [AppController],
   providers: [AppService, ConfigService],
 })
-export class AppModule { }
+export class AppModule {}
